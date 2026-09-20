@@ -17,9 +17,13 @@ coverage/
 # Environment files and secrets — never commit these
 .env
 .env*
+# ...but the placeholder template is safe to commit.
+!.env.example
 
 # AWS CDK
 cdk.out/
+# CDK caches AZ lookups keyed by account id; never commit the operator's account.
+cdk.context.json
 
 # Logs
 *.log

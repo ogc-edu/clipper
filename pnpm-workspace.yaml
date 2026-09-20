@@ -1,9 +1,17 @@
 packages:
   - "apps/*"
   - "packages/*"
+  - "infra"
 
 # Single source of truth for shared dependency versions across the workspace.
 # Packages reference these with `"catalog:"` in their package.json.
+#
+# `allowBuilds` controls which dependencies may run install scripts. esbuild
+# (used by vitest and tsx) needs its install script to link the platform
+# binary.
+allowBuilds:
+  esbuild: true
+
 catalog:
   "@eslint/js": ^10.0.1
   "@next/eslint-plugin-next": ^16.3.5

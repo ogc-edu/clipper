@@ -14,7 +14,10 @@
     "format:check": "prettier --check .",
     "lint": "eslint .",
     "test": "pnpm -r run test",
-    "typecheck": "pnpm build && pnpm -r run typecheck"
+    "typecheck": "pnpm build && pnpm -r run typecheck",
+    "cdk:synth": "pnpm --filter @clipper/infra synth",
+    "cdk:deploy": "pnpm --filter @clipper/infra run deploy",
+    "cdk:destroy": "pnpm --filter @clipper/infra destroy"
   },
   "devDependencies": {
     "@eslint/js": "catalog:",

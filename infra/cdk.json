@@ -1,0 +1,9 @@
+{
+  "app": "node --import tsx bin/infra.ts",
+  "output": "cdk.out",
+  "versionReporting": false,
+  "requireApproval": "never",
+  "context": {
+    "@aws-cdk/core:defaultCrossStackReferences": "strong"
+  }
+}
