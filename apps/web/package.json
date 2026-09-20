@@ -1,0 +1,25 @@
+{
+  "name": "@clipper/web",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Clipper web app and API (Next.js App Router).",
+  "scripts": {
+    "build": "next build",
+    "dev": "next dev",
+    "start": "next start",
+    "typecheck": "next typegen && tsc --noEmit"
+  },
+  "dependencies": {
+    "@clipper/config": "workspace:*",
+    "@clipper/shared": "workspace:*",
+    "next": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "typescript": "catalog:"
+  }
+}

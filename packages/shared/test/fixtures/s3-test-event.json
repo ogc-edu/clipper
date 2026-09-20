@@ -1,0 +1,8 @@
+{
+  "Service": "Amazon S3",
+  "Event": "s3:TestEvent",
+  "Time": "2025-01-15T12:34:56.789Z",
+  "Bucket": "clipper-uploads-dev",
+  "RequestId": "EXAMPLE123456789",
+  "HostId": "EXAMPLEabcdefghijklmnopqrstuvwxyz0123456789+/="
+}
