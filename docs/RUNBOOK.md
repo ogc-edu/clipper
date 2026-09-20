@@ -201,13 +201,104 @@ aws cloudformation list-stacks --region ap-southeast-1 \
 
 ---
 
-## 7. Manual setup ledger (from `docs/IMPLEMENTATION_PLAN.md`)
+## 7. Database (feature 003)
+
+The `DatabaseStack` owns the Clipper record-of-truth PostgreSQL instance:
+
+- PostgreSQL **16**, `db.t4g.micro`, single-AZ, 20 GB gp3, encrypted at rest.
+- Private subnets only, `publiclyAccessible: false`; its security group
+  accepts **tcp/5432 from the app security group only**.
+- Master credentials are CDK-generated into Secrets Manager under
+  `clipper/dev/db-credentials`. **Rotate the value, never print it.**
+- In dev it is `RemovalPolicy.DESTROY` + `deleteAutomatedBackups` with
+  deletion protection off; prod retains and protects it.
+
+The schema/tables arrive in feature 004 — this stack is infrastructure only.
+
+### 7.1 Stack outputs
+
+| Output export | Meaning |
+|---|---|
+| `dev-clipper-db-secret-arn` | Secrets Manager ARN for master credentials |
+| `dev-clipper-db-endpoint-address` | RDS writer endpoint hostname (private) |
+| `dev-clipper-db-endpoint-port` | RDS writer endpoint port (5432) |
+| `dev-clipper-db-name` | Logical DB name (`clipper`) |
+
+```bash
+aws cloudformation describe-stacks --region ap-southeast-1 \
+  --stack-name DatabaseStack \
+  --query 'Stacks[0].Outputs[].{Key:OutputKey,Value:OutputValue}'
+```
+
+### 7.2 Reading the secret (never logs the value)
+
+```bash
+SECRET_ID=clipper/dev/db-credentials
+aws secretsmanager get-secret-value --region ap-southeast-1 \
+  --secret-id "$SECRET_ID" --query SecretString --output text > /tmp/db-cred.json
+python3 -c "import json;d=json.load(open('/tmp/db-cred.json'));print(sorted(d))"  # keys only
+rm -f /tmp/db-cred.json
+```
+
+Do **not** paste the value into a shell history, ticket, or report; redact it
+if it must be shown. The RDS `SecretTargetAttachment` adds `host`, `port`,
+`dbname`, and `engine` to the generated `username`/`password`.
+
+### 7.3 In-VPC connectivity — acceptance **deferred to 006**
+
+There is no jump box in feature 003 (zero NAT, private-only DB), so the
+connection proof is deferred to feature 006's ECS Exec shell. The exact
+procedure once the web service is running (`/api/health/db` is the cheap
+alternative proof):
+
+```bash
+REGION=ap-southeast-1
+CLUSTER=clipper-cluster          # ComputeStack name from 006
+SERVICE=clipper-web              # web service from 006
+
+# 1. Pick a running web task (must have enableExecuteCommand: true).
+TASK_ARN=$(aws ecs list-tasks --region "$REGION" \
+  --cluster "$CLUSTER" --service-name "$SERVICE" \
+  --query 'taskArns[0]' --output text)
+
+# 2. Open an interactive shell in the app container.
+aws ecs execute-command --region "$REGION" \
+  --cluster "$CLUSTER" --task "$TASK_ARN" --container web \
+  --interactive --command "/bin/sh"
+```
+
+Inside the container (`DATABASE_URL` is injected from Secrets Manager in 006):
+
+```sh
+# node:20-alpine runner does not ship psql; install the v16 client once.
+apk add --no-cache postgresql16-client
+psql "$DATABASE_URL" -c 'select version();'
+psql "$DATABASE_URL" -c '\conninfo'
+```
+
+A successful `select version()` showing PostgreSQL 16 (from inside the VPC,
+with no public path to the instance) closes acceptance criterion 3 of the
+003 plan. Optionally verify the runner host cannot reach the DB from outside
+the VPC:
+
+```bash
+# From a workstation (expected: connection times out / refused).
+pg_isready -h "$(aws cloudformation describe-stacks --region ap-southeast-1 \
+  --stack-name DatabaseStack \
+  --query 'Stacks[0].Outputs[?OutputKey==`DatabaseEndpointAddress`].OutputValue' \
+  --output text)" -p 5432
+```
+
+---
+
+## 8. Manual setup ledger (from `docs/IMPLEMENTATION_PLAN.md`)
 
 | When | Action |
 |---|---|
 | Before 002 | AWS credentials configured; run `cdk bootstrap` |
 | Before 002 deploy | Export `CDK_DEFAULT_ACCOUNT` and `OPS_ALERTS_EMAIL` |
 | After 002 deploy | Click the confirmation link in the SNS `ops-alerts` email |
+| Before 003 | None — reuses 002's VPC and app security group |
 
 Later features own their own manual steps (Cognito admin user in 005,
 first ECR image push in 006, GitHub connection handshake in 007,

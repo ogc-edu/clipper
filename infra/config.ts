@@ -26,6 +26,10 @@ export const appConfigSchema = z.object({
   thumbnailDlq: resourceName,
   dbName: resourceName,
   dbUsername: resourceName,
+  /** RDS instance class; `db.` is prepended by CDK. Sized for dev (003). */
+  dbInstanceClass: resourceName,
+  /** Name of the Secrets Manager secret holding the RDS master credentials. */
+  dbSecretName: resourceName,
   logGroupPrefix: z.string().min(1),
   /** Browser origins allowed to talk to the app and upload to S3. */
   appOrigins: z.array(z.url()).min(1),
@@ -55,6 +59,8 @@ export const appConfig: AppConfig = appConfigSchema.parse({
   thumbnailDlq: "clipper-thumbnail-dlq",
   dbName: "clipper",
   dbUsername: "clipper_admin",
+  dbInstanceClass: "t4g.micro",
+  dbSecretName: "clipper/dev/db-credentials",
   logGroupPrefix: "/ecs/clipper/",
   appOrigins: ["http://localhost:3000"],
   github: { owner: "ogc-edu", repo: "clipper", branch: "main" },
