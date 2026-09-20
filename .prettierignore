@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.next/
+coverage/
+pnpm-lock.yaml
+*.tsbuildinfo
+# Authored specification documents are not reformatted by tooling.
+docs/
+# Captured AWS payloads are kept byte-for-byte faithful to production.
+packages/shared/test/fixtures/
