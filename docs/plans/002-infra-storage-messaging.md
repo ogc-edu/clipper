@@ -33,12 +33,17 @@ so it also establishes stack layout and testing patterns
 2. `infra/config.ts` exports a typed const: region, bucket names, queue
    names, topic names, ops email, app domain placeholder (used later for
    CORS/callbacks; default `http://localhost:3000`).
-3. NetworkStack: VPC (2 AZ, public + private subnets, 1 NAT gateway —
-   note cost in plan output), `appSg` security group (exported for web
-   tasks later).
+3. NetworkStack: VPC (2 AZ, public + private subnets, **zero NAT
+   gateways** — cost; ~$32/mo each). Private subnets reach AWS services
+   via VPC endpoints: S3 (gateway), SQS / SecretsManager / CloudWatch
+   Logs (interface). Feature 006 will add ecr.api + ecr.dkr interface
+   endpoints so Fargate can pull images (S3 gateway covers image
+   layers) — leave a TODO in the stack. Also `appSg` security group
+   (exported for web tasks later).
 4. StorageStack:
-   - Uploads bucket: block all public access, CORS allowing PUT from the
-     app origin (config), lifecycle: expire objects after 7 days,
+   - Uploads bucket: block all public access, CORS allowing POST from the
+     app origin (config) — browser uploads use presigned POST (008),
+     lifecycle: expire objects after 7 days,
      server-side encryption (S3-managed).
    - Output bucket: block all public access, no CORS, no lifecycle.
 5. MessagingStack:
