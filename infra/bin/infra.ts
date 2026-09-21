@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import * as cdk from "aws-cdk-lib";
 import { appConfig, loadSynthEnv } from "../config.js";
+import { DatabaseStack } from "../lib/database-stack.js";
 import { MessagingStack } from "../lib/messaging-stack.js";
 import { NetworkStack } from "../lib/network-stack.js";
 import { StorageStack } from "../lib/storage-stack.js";
@@ -14,11 +15,20 @@ const env: cdk.Environment = {
   region: synthEnv.region,
 };
 
-new NetworkStack(app, "NetworkStack", {
+const network = new NetworkStack(app, "NetworkStack", {
   env,
   description:
     "Clipper network: 2-AZ VPC (no NAT), S3/SQS/SecretsManager/Logs VPC endpoints, app security group.",
   appConfig,
+});
+
+new DatabaseStack(app, "DatabaseStack", {
+  env,
+  description:
+    "Clipper database: private single-AZ PostgreSQL 16 with credentials in Secrets Manager.",
+  appConfig,
+  vpc: network.vpc,
+  appSecurityGroup: network.appSecurityGroup,
 });
 
 const storage = new StorageStack(app, "StorageStack", {

@@ -16,6 +16,8 @@ describe("appConfig", () => {
       thumbnailDlq: "clipper-thumbnail-dlq",
       dbName: "clipper",
       dbUsername: "clipper_admin",
+      dbInstanceClass: "t4g.micro",
+      dbSecretName: "clipper/dev/db-credentials",
       logGroupPrefix: "/ecs/clipper/",
       appOrigins: ["http://localhost:3000"],
       github: { owner: "ogc-edu", repo: "clipper", branch: "main" },
